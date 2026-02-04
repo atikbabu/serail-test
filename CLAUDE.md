@@ -6,98 +6,256 @@ This file provides guidance for AI assistants working with this codebase.
 
 **Repository:** serail-test
 **Owner:** atikbabu
-**Status:** New repository (initial setup)
+**Language:** Python 3.8+
+**Purpose:** Educational demonstration of Serial and Ethernet communication through all 7 OSI model layers
 
-This repository is currently in the initial setup phase. The structure and conventions documented below should be followed as the project develops.
+This application demonstrates how data is encapsulated/decapsulated as it travels through the OSI (Open Systems Interconnection) model, comparing Serial (RS-232/HDLC) and Ethernet (IEEE 802.3/TCP-IP) communication.
 
 ## Project Structure
 
 ```
 serail-test/
-├── CLAUDE.md          # AI assistant guidelines (this file)
-└── .git/              # Git repository metadata
+├── CLAUDE.md              # AI assistant guidelines (this file)
+├── README.md              # User documentation
+├── requirements.txt       # Python dependencies
+├── src/
+│   ├── __init__.py        # Package init with version info
+│   ├── main.py            # CLI entry point with interactive menu
+│   ├── osi_layers/        # OSI layer implementations
+│   │   ├── __init__.py    # Layer exports
+│   │   ├── base.py        # Base classes: OSILayer, DataUnit
+│   │   ├── physical.py    # Layer 1: RS-232/Ethernet signals
+│   │   ├── data_link.py   # Layer 2: HDLC/IEEE 802.3 framing
+│   │   ├── network.py     # Layer 3: IP addressing & routing
+│   │   ├── transport.py   # Layer 4: TCP/UDP segments
+│   │   ├── session.py     # Layer 5: Session management
+│   │   ├── presentation.py# Layer 6: Encoding/encryption
+│   │   └── application.py # Layer 7: HTTP/Modbus protocols
+│   ├── serial_comm/       # Serial communication demo
+│   │   ├── __init__.py
+│   │   └── serial_demo.py # SerialCommunicationDemo class
+│   ├── ethernet_comm/     # Ethernet communication demo
+│   │   ├── __init__.py
+│   │   └── ethernet_demo.py # EthernetCommunicationDemo class
+│   └── utils/             # Utility modules
+│       ├── __init__.py
+│       └── visualizer.py  # OSIVisualizer for ASCII diagrams
+└── tests/
+    ├── __init__.py
+    └── test_osi_layers.py # Unit tests for all layers
 ```
 
-*Note: This structure will be updated as the project grows.*
+## Key Components
+
+### OSI Layer Classes (`src/osi_layers/`)
+
+Each layer inherits from `OSILayer` base class and implements:
+- `encapsulate(data: DataUnit) -> DataUnit` - Add headers/trailers going down the stack
+- `decapsulate(data: DataUnit) -> DataUnit` - Remove headers going up the stack
+
+**DataUnit** is the core data structure representing PDUs (Protocol Data Units) at each layer.
+
+### Communication Demos
+
+- **SerialCommunicationDemo** (`src/serial_comm/serial_demo.py`)
+  - Demonstrates Modbus/HDLC protocols
+  - RS-232 physical layer simulation
+  - Optional real serial port connection via PySerial
+
+- **EthernetCommunicationDemo** (`src/ethernet_comm/ethernet_demo.py`)
+  - Demonstrates HTTP/TCP/IP protocols
+  - TCP three-way handshake simulation
+  - ARP and DNS query demonstrations
+
+### Visualizer (`src/utils/visualizer.py`)
+
+Provides ASCII art visualizations:
+- OSI model diagram
+- Encapsulation process
+- Frame structures (Ethernet/HDLC)
+- TCP handshake diagram
 
 ## Development Guidelines
 
-### Git Workflow
-
-1. **Branch Naming Convention**
-   - Feature branches: `feature/<description>`
-   - Bug fixes: `fix/<description>`
-   - AI-generated branches: `claude/<session-identifier>`
-
-2. **Commit Messages**
-   - Use clear, descriptive commit messages
-   - Start with a verb in imperative mood (Add, Fix, Update, Remove, Refactor)
-   - Keep the first line under 72 characters
-   - Add body for complex changes
-
-3. **Pull Requests**
-   - Include a clear description of changes
-   - Reference related issues if applicable
-   - Ensure all tests pass before merging
-
 ### Code Conventions
 
-*To be defined as the project develops. Common conventions include:*
+1. **Python Style**
+   - Follow PEP 8 guidelines
+   - Use 4-space indentation
+   - Use type hints where applicable
+   - Document classes and public methods with docstrings
 
-- Consistent indentation (spaces vs tabs)
-- Naming conventions for files, functions, and variables
-- Documentation requirements
-- Error handling patterns
+2. **Naming Conventions**
+   - Classes: `PascalCase` (e.g., `DataLinkLayer`)
+   - Functions/methods: `snake_case` (e.g., `encapsulate`)
+   - Constants: `UPPER_SNAKE_CASE` (e.g., `LAYER_NUMBER`)
+   - Private methods: `_leading_underscore`
 
-### Testing
+3. **File Organization**
+   - One main class per file
+   - Related utilities grouped in `utils/`
+   - Tests mirror source structure
 
-*Testing framework and conventions to be defined.*
+### OSI Layer Implementation Pattern
+
+When modifying or adding OSI layer functionality:
+
+```python
+class NewLayer(OSILayer):
+    LAYER_NUMBER = N
+    LAYER_NAME = "LayerName"
+    PDU_NAME = "PDUName"
+
+    def encapsulate(self, data: DataUnit) -> DataUnit:
+        # Add layer-specific header
+        header = {...}
+        self.log(f"Processing {self.PDU_NAME}")
+        return DataUnit(
+            payload=data,
+            header=header,
+            layer=self.LAYER_NUMBER,
+            pdu_name=self.PDU_NAME
+        )
+
+    def decapsulate(self, data: DataUnit) -> DataUnit:
+        # Extract and process header
+        # Return payload for upper layer
+        return data.payload
+```
+
+### Git Workflow
+
+1. **Branch Naming**
+   - Feature: `feature/<description>`
+   - Bug fix: `fix/<description>`
+   - AI branches: `claude/<session-identifier>`
+
+2. **Commit Messages**
+   - Start with verb: Add, Fix, Update, Remove, Refactor
+   - Keep first line under 72 characters
+   - Reference issues when applicable
+
+## Common Tasks
+
+### Running the Application
+
+```bash
+# Interactive mode (default)
+python -m src.main
+
+# Serial demo only
+python -m src.main --mode serial
+
+# Ethernet demo only
+python -m src.main --mode ethernet
+
+# Comparison mode
+python -m src.main --mode compare
+
+# With custom message
+python -m src.main --mode ethernet --message "Hello"
+```
+
+### Running Tests
+
+```bash
+# Using pytest
+python -m pytest tests/ -v
+
+# Using unittest
+python -m unittest discover -s tests -v
+
+# Run specific test
+python -m pytest tests/test_osi_layers.py::TestPhysicalLayer -v
+```
+
+### Installing Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Adding a New Protocol
+
+1. Identify which layer the protocol operates at
+2. Add protocol logic to the appropriate layer class
+3. Add configuration to `protocol_configs` if in Application layer
+4. Update tests in `tests/test_osi_layers.py`
+5. Document in README.md
+
+## Dependencies
+
+| Package   | Version | Purpose                    |
+|-----------|---------|----------------------------|
+| pyserial  | >=3.5   | Real serial port access    |
+| colorama  | >=0.4.6 | Colored terminal output    |
+| tabulate  | >=0.9.0 | Table formatting           |
 
 ## AI Assistant Instructions
 
-### When Working on This Repository
+### When Working on This Codebase
 
-1. **Always explore first** - Read existing code before making changes
-2. **Follow existing patterns** - Match the style and conventions already in use
-3. **Keep changes minimal** - Only modify what's necessary for the task
-4. **Test your changes** - Run available tests and verify functionality
-5. **Document significant changes** - Update relevant documentation
+1. **Understand the OSI model** - Each layer has specific responsibilities
+2. **Maintain encapsulation pattern** - Data flows down (encapsulate) and up (decapsulate)
+3. **Keep demonstrations educational** - Verbose logging helps users understand
+4. **Test layer interactions** - Changes may affect multiple layers
 
-### Common Tasks
+### Important Files to Review First
 
-#### Setting Up the Project
-```bash
-# Clone the repository
-git clone <repository-url>
-
-# Install dependencies (when package.json exists)
-npm install  # or yarn install
-```
-
-#### Running Tests
-```bash
-# To be defined when testing framework is set up
-```
-
-#### Building the Project
-```bash
-# To be defined when build system is configured
-```
+1. `src/osi_layers/base.py` - Core classes and patterns
+2. `src/main.py` - Entry point and CLI structure
+3. `tests/test_osi_layers.py` - Expected behavior
 
 ### Things to Avoid
 
-- Do not commit sensitive information (API keys, credentials, etc.)
-- Do not modify core configuration without understanding implications
-- Do not introduce breaking changes without clear documentation
-- Do not add unnecessary dependencies
+- Breaking the encapsulation/decapsulation symmetry
+- Removing educational logging without reason
+- Adding real network operations without user confirmation
+- Committing credentials or sensitive data
 
-## Maintenance
+### Testing Changes
 
-This CLAUDE.md file should be updated when:
-- New major features or modules are added
-- Development workflows change
-- New conventions are established
-- Build or test processes are updated
+Always run the full test suite after modifications:
+```bash
+python -m pytest tests/ -v
+```
+
+Verify interactive mode still works:
+```bash
+python -m src.main --mode serial --quiet
+python -m src.main --mode ethernet --quiet
+```
+
+## Architecture Notes
+
+### Data Flow (Sending)
+
+```
+Application Data
+       ↓
+[Layer 7] Add HTTP/Modbus headers
+       ↓
+[Layer 6] Encode/encrypt/compress
+       ↓
+[Layer 5] Add session ID
+       ↓
+[Layer 4] Add TCP/UDP ports, seq numbers
+       ↓
+[Layer 3] Add IP addresses
+       ↓
+[Layer 2] Add MAC addresses, FCS
+       ↓
+[Layer 1] Convert to bits, add preamble
+       ↓
+Physical Medium (Wire/Radio)
+```
+
+### Key Design Decisions
+
+1. **DataUnit wrapping** - Each layer wraps the previous layer's DataUnit as its payload, preserving the full encapsulation chain
+2. **Simulation focus** - This is educational, not production networking code
+3. **Protocol flexibility** - Easy to add new protocols at any layer
+4. **Verbose by default** - Users can see exactly what happens at each layer
 
 ---
 
